@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:1.3.0-gpu-py3
+FROM tensorflow/tensorflow:1.10.0-gpu-py3
 
 RUN apt update && \
     apt install -y --no-install-recommends \
@@ -22,5 +22,5 @@ EXPOSE 6006
 # JupyterLab
 EXPOSE 8888
 
-CMD ["/usr/local/bin/jupyter-lab", "--allow-root", "--no-browser"]
+CMD ["/bin/bash"]
 

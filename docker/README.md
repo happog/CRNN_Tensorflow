@@ -1,11 +1,8 @@
 # Building docker images
-From the root directory of the repository, run
 
-```
-docker build -t crnn-tf:gpu -f docker/gpu/Dockerfile .
-```
+Still work in progress
 
-```
-docker build -t crnn-tf:cpu -f docker/cpu/Dockerfile .
-```
+## TODO
+
+- [ ] Add new docker file
 

@@ -1,19 +1,27 @@
 # CRNN_Tensorflow
-Use tensorflow to implement a Deep Neural Network for scene text recognition mainly based on the paper "An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition".You can refer to their paper for details http://arxiv.org/abs/1507.05717. Thanks for the author [Baoguang Shi](https://github.com/bgshih).  
-This model consists of a CNN stage, RNN stage and CTC loss for scene text recognition task.
+This is a TensorFlow implementation of a Deep Neural Network for scene 
+text recognition. It is  mainly based on the paper 
+["An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition"](http://arxiv.org/abs/1507.05717). 
+You can refer to the paper for architecture details. Thanks to 
+the author [Baoguang Shi](https://github.com/bgshih).
+  
+The model consists of a CNN stage extracting features which are fed 
+to an RNN stage (Bi-LSTM) and a CTC loss.
 
 ## Installation
 
-This software has mostly been tested on Ubuntu 16.04(x64) using python3.5 and tensorflow 1.3.0 with cuda-8.0, cudnn-6.0 and a GTX-1070 GPU. Other versions of tensorflow have not been tested but might work properly above version 1.0.
+This software has been developed on Ubuntu 16.04(x64) using python 3.5 and 
+TensorFlow 1.12. Since it uses some recent features of TensorFlow it is 
+incompatible with older versions.
 
 The following methods are provided to install dependencies:
 
+### Docker
 
-## Docker
+There are Dockerfiles inside the folder `docker`. Follow the instructions 
+inside `docker/README.md` to build the images.
 
-There are Dockerfiles inside the folder `docker`. Follow the instructions inside `docker/README.md` to build the images.
-
-## Conda
+### Conda
 
 You can create a conda environment with the required dependencies using: 
 
@@ -21,7 +29,7 @@ You can create a conda environment with the required dependencies using:
 conda env create -f crnntf-env.yml
 ```
 
-## Pip
+### Pip
 
 Required packages may be installed with
 
@@ -29,73 +37,236 @@ Required packages may be installed with
 pip3 install -r requirements.txt
 ```
 
-## Test model
-In this repo I uploaded a model trained on a subset of the [Synth 90k](http://www.robots.ox.ac.uk/~vgg/data/text/). During data preparation process the dataset is converted into a tensorflow records which you can find in the data folder.
-You can test the trained model on the converted dataset by
+## Testing the pre-trained model
+
+### Evaluate the model on the synth90k dataset
+In this repo you will find a model pre-trained on the 
+[Synth 90k](http://www.robots.ox.ac.uk/~vgg/data/text/)dataset. When the tfrecords
+file of synth90k dataset has been successfully generated you may evaluated the
+model by the following script
+
+The pretrained crnn model weights on Synth90k dataset can be found
+[here](https://www.dropbox.com/sh/y4eaunamardibnd/AAB4h8NkakASDoc6Ek4knEGIa?dl=0)
 
 ```
-python tools/test_shadownet.py --dataset_dir data/ --weights_path model/shadownet/shadownet_2017-09-29-19-16-33.ckpt-39999
-```
-`Expected output is`  
-![Test output](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/test_output.png)
-If you want to test a single image you can do it by
-```
-python tools/demo_shadownet.py --image_path data/test_images/test_01.jpg --weights_path model/shadownet/shadownet_2017-09-29-19-16-33.ckpt-39999
-```
-`Example image_01 is`  
-![Example image1](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/text_example_image1.png)  
-`Expected output_01 is`  
-![Example image1 output](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/test_example_image1_output.png)  
-`Example image_02 is`  
-![Example image2](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/test_example_image2.png)  
-`Expected output_02 is`  
-![Example image2 output](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/test_example_image2_output.png) 
-`Example image_03 is`  
-![Example image3](https://github.com/TJCVRS/CRNN_Tensorflow/blob/chinese_version_debug/data/images/demo_chinese.png)  
-`Expected output_03 is`  
-![Example image3 output](https://github.com/TJCVRS/CRNN_Tensorflow/blob/chinese_version_debug/data/images/demo_chinese_output.png)
-`Example image_04 is`  
-![Example image4](https://github.com/TJCVRS/CRNN_Tensorflow/blob/chinese_version_debug/data/images/dmeo_chinese_2.png)  
-`Expected output_04 is`  
-![Example image4 output](https://github.com/TJCVRS/CRNN_Tensorflow/blob/chinese_version_debug/data/images/demo_chinese_2_ouput.png)
-
-## Train your own model
-#### Data Preparation
-Firstly you need to store all your image data in a root folder then you need to supply a txt file named sample.txt to specify the relative path to the image data dir and it's corresponding text label. For example
-
-```
-path/1/2/373_coley_14845.jpg coley
-path/17/5/176_Nevadans_51437.jpg nevadans
+python tools/evaluate_shadownet.py --dataset_dir PATH/TO/YOUR/DATASET_DIR 
+--weights_path PATH/TO/YOUR/MODEL_WEIGHTS_PATH
+--char_dict_path PATH/TO/CHAR_DICT_PATH 
+--ord_map_dict_path PATH/TO/ORD_MAP_PATH
+--process_all 1 --visualize 1
 ```
 
-Secondly you are supposed to convert your dataset into tensorflow records which can be done by
-```
-python tools/write_text_features --dataset_dir path/to/your/dataset --save_dir path/to/tfrecords_dir
-```
-All your training image will be scaled into (32, 100, 3) the dataset will be divided into train, test, validation set and you can change the parameter to control the ratio of them.
+If you set visualize true the expected output during evaluation process is
 
-#### Train model
-The whole training epoches are 40000 in my experiment. I trained the model with a batch size 32, initialized learning rate is 0.1 and decrease by multiply 0.1 every 10000 epochs. For more training parameters information you can check the global_configuration/config.py for details. To train your own model by
+![evaluate output](./data/images/evaluate_output.png)
+
+After all the evaluation process is done you should see some thing like this:
+
+![evaluation_result](./data/images/evaluate_result.png)
+
+The model's main evaluation index are as follows:
+
+**Test Dataset Size**: 891927 synth90k test images
+
+**Per char Precision**: 0.974325 without average weighted on each class
+
+**Full sequence Precision**: 0.932981 without average weighted on each class
+
+For Per char Precision:
+
+single_label_accuracy = correct_predicted_char_nums_of_single_sample / single_label_char_nums
+
+avg_label_accuracy = sum(single_label_accuracy) / label_nums
+
+For Full sequence Precision:
+
+single_label_accuracy = 1 if the prediction result is exactly the same as label else 0
+
+avg_label_accuracy = sum(single_label_accuracy) / label_nums
+
+Part of the confusion matrix of every single char looks like this:
+
+![evaluation_confusion_matrix](./data/images/evaluate_confusion_matrix.png)
+
+
+### Test the model on the single image
+
+If you want to test a single image you can do it with
+```
+python tools/test_shadownet.py --image_path PATH/TO/IMAGE 
+--weights_path PATH/TO/MODEL_WEIGHTS
+--char_dict_path PATH/TO/CHAR_DICT_PATH 
+--ord_map_dict_path PATH/TO/ORD_MAP_PATH
+```
+
+### Test example images
+
+Example test_01.jpg
+ 
+![Example image1](./data/images/test_output_1.png)  
+
+Example test_02.jpg
+
+![Example image2](./data/images/test_output_2.png)  
+
+Example test_03.jpg
+
+![Example image3](./data/images/test_output_3.png) 
+
+## Training your own model
+
+#### Data preparation
+Download the whole synth90k dataset [here](http://www.robots.ox.ac.uk/~vgg/data/text/)
+And extract all th files into a root dir which should contain several txt file and
+several folders filled up with pictures. Then you need to convert the whole 
+dataset into tensorflow records as follows
 
 ```
-python tools/train_shadownet.py --dataset_dir path/to/your/tfrecords
+python tools/write_text_features 
+--dataset_dir PATH/TO/SYNTH90K_DATASET_ROOT_DIR
+--save_dir PATH/TO/TFRECORDS_DIR
 ```
-You can also continue the training process from the snapshot by
-```
-python tools/train_shadownet.py --dataset_dir path/to/your/tfrecords --weights_path path/to/your/last/checkpoint
-```
-After several times of iteration you can check the log file in logs folder you are supposed to see the following contenent
-![Training log](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/train_log.png)
-The seq distance is computed by calculating the distance between two saparse tensor so the lower the accuracy value is the better the model performs.The train accuracy is computed by calculating the character-wise precision between the prediction and the ground truth so the higher the better the model performs.
 
-During my experiment the `loss` drops as follows  
-![Training loss](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/train_loss.png)
-The `distance` between the ground truth and the prediction drops as follows  
-![Sequence distance](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/seq_distance.png)
+During converting all the source image will be scaled into (32, 100)
+
+#### Training
+
+For all the available training parameters, check `global_configuration/config.py`, 
+then train your model with
+
+```
+python tools/train_shadownet.py --dataset_dir PATH/TO/YOUR/TFRECORDS
+--char_dict_path PATH/TO/CHAR_DICT_PATH 
+--ord_map_dict_path PATH/TO/ORD_MAP_PATH
+```
+
+If you wish, you can add more metrics to the training progress messages with 
+`--decode_outputs 1`, but this will slow
+training down. You can also continue the training process from a snapshot with
+
+```
+python tools/train_shadownet.py --dataset_dir PATH/TO/YOUR/TFRECORDS
+--weights_path PATH/TO/YOUR/PRETRAINED_MODEL_WEIGHTS
+--char_dict_path PATH/TO/CHAR_DICT_PATH --ord_map_dict_path PATH/TO/ORD_MAP_PATH
+```
+
+If you has multiple gpus in your local machine you may use multiple gpu training
+to access a larger batch size input data. This will be supported as follows
+
+```
+python tools/train_shadownet.py --dataset_dir PATH/TO/YOUR/TFRECORDS
+--char_dict_path PATH/TO/CHAR_DICT_PATH --ord_map_dict_path PATH/TO/ORD_MAP_PATH
+--multi_gpus 1
+
+```
+
+The sequence distance is computed by calculating the distance between two 
+sparse tensors so the lower the accuracy value
+is the better the model performs. The training accuracy is computed by 
+calculating the character-wise precision between
+the prediction and the ground truth so the higher the better the model performs.
+
+#### Export tensorflow saved model
+
+You can convert the ckpt model into tensorflow saved model for tensorflow service
+by running following script
+
+```
+bash tools/export_crnn_saved_model.sh
+```
 
 ## Experiment
-The accuracy during training process rises as follows  
-![Training accuracy](https://github.com/TJCVRS/CRNN_Tensorflow/blob/master/data/images/training_accuracy.md)
+
+The original experiment run for 2000000 epochs, with a batch size of 32, 
+an initial learning rate of 0.01 and exponential
+decay of 0.1 every 500000 epochs. During training the `train loss` dropped as 
+follows  
+
+![Training loss](./data/images/avg_train_loss.png)
+
+The `val loss` dropped as follows
+  
+![Validation_loss](./data/images/avg_val_loss.png)
+
+## 2019.3.27 Updates
+I have uploaded a newly trained crnn model on chinese dataset which can be found
+[here](https://pan.baidu.com/s/1ufYbnZAZ1q0AlK7yZ08cvQ). Sorry for not knowing 
+the owner of the dataset. But thanks for his great work. If someone knows it 
+you're welcome to let me know. The pretrained weights can be found 
+[here](https://www.dropbox.com/sh/z22xsn4byddalv3/AAAiIxAHJKbqy44M73ow5znSa?dl=0)
+
+Before start training you may need reorgnize the dataset's label information according 
+to the synth90k dataset's format if you want to use the same data feed pip line 
+mentioned above. Now I have reimplemnted a more efficient tfrecords writer which will
+accelerate the process of generating tfrecords file. You may refer to the code for
+details. Some information about training is listed bellow:
+
+**image size**: (280, 32)
+
+**classes nums**: 5824 without blank
+
+**sequence length**: 70
+
+**training sample counts**: 2733004
+
+**validation sample counts**: 364401
+
+**testing sample counts**: 546601
+
+**batch size**: 32
+
+**training iter nums**: 200000
+
+**init lr**: 0.01
+
+### Test example images
+
+Example test_01.jpg
+ 
+![Example image1](./data/images/test_output_4.png)  
+
+Example test_02.jpg
+
+![Example image2](./data/images/test_output_5.png)  
+
+Example test_03.jpg
+
+![Example image3](./data/images/test_output_6.png) 
+
+### training tboard file
+
+![Training loss](./data/images/avg_train_loss_cn.png)
+
+The `val loss` dropped as follows
+  
+![Validation_loss](./data/images/avg_val_loss_cn.png)
+
+## 2019.4.10 Updates
+Add a small demo to recognize chinese pdf using the chinese crnn model weights. If you
+want to have a try you may follow the command:
+
+```
+cd CRNN_ROOT_REPO
+python tools/recongnize_chinese_pdf.py -c ./data/char_dict/char_dict_cn.json 
+-o ./data/char_dict/ord_map_cn.json --weights_path model/crnn_chinese/shadownet.ckpt 
+--image_path data/test_images/test_pdf.png --save_path pdf_recognize_result.txt
+```
+
+You should see the same result as follows:
+
+The left image is the recognize result displayed on console and the right 
+image is the origin pdf image.
+
+![recognize_result_console](./data/images/pdf_recognize_console.png)
+
+The left image is the recognize result written in local file and the right 
+image is the origin pdf image.
+![recognize_result_file](./data/images/pdf_recognize_file.png)
 
 ## TODO
-The model is trained on a subet of [Synth 90k](http://www.robots.ox.ac.uk/~vgg/data/text/). So i will train a new model on the whold dataset to get a more robust model.The crnn model needs large of training data to get a rubust model.
+
+- [x] Add new model weights trained on the whole synth90k dataset
+- [x] Add multiple gpu training scripts
+- [x] Add new pretrained model on chinese dataset
+- [ ] Add an online toy demo
+- [ ] Add tensorflow service script
