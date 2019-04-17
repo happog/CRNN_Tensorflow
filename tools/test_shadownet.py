@@ -17,6 +17,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import glog as logger
 
+import sys
+sys.path.append("../")
+
 from config import global_config
 from crnn_model import crnn_net
 from data_provider import tf_io_pipline_fast_tools
